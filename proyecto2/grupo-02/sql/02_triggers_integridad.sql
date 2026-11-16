@@ -46,6 +46,10 @@ DECLARE
     v_rol    text;
     v_activo boolean;
 BEGIN
+    -- La obligatoriedad la impone NOT NULL de forma declarativa.
+    IF p_personal_id IS NULL THEN
+        RETURN;
+    END IF;
     SELECT rol, activo INTO v_rol, v_activo FROM personal WHERE personal_id = p_personal_id;
     IF NOT FOUND THEN
         PERFORM fn_error(format('%s: el personal %s no existe', p_contexto, p_personal_id));
@@ -1505,8 +1509,12 @@ BEGIN
     IF NEW.fecha_reclamo <= v_entrega.fecha_hora OR v_orden_nueva.fecha_hora_recepcion <= v_entrega.fecha_hora THEN
         PERFORM fn_error('G02-INT: el reclamo y su orden nueva deben ser posteriores a la entrega');
     END IF;
+    -- El kilometraje del reclamo es el kilometraje con que ingresa la orden nueva.
     IF NEW.km_reclamo IS NULL THEN
         NEW.km_reclamo := v_orden_nueva.kilometraje_ingreso;
+    ELSIF NEW.km_reclamo <> v_orden_nueva.kilometraje_ingreso THEN
+        PERFORM fn_error(format('G02-INT: el kilometraje del reclamo (%s) debe ser el de ingreso de la orden nueva %s (%s)',
+                                NEW.km_reclamo, NEW.orden_nueva_id, v_orden_nueva.kilometraje_ingreso));
     END IF;
     IF NEW.km_reclamo < v_entrega.kilometraje_salida THEN
         PERFORM fn_error(format('G02-INT: el kilometraje del reclamo (%s) es menor que el de la entrega (%s)',
@@ -1519,9 +1527,11 @@ BEGIN
     v_dentro_km   := v_garantia.km IS NULL
                      OR NEW.km_reclamo - v_entrega.kilometraje_salida <= v_garantia.km;
     IF NEW.decision IN ('Aceptada', 'Pendiente') AND NOT (v_dentro_dias AND v_dentro_km) THEN
-        PERFORM fn_error(format('G02-INT: garantía %s vencida (vence lo primero): dentro de días=%s, dentro de km=%s; '
+        PERFORM fn_error(format('G02-INT: garantía %s vencida (vence lo primero): dentro del plazo de días: %s; dentro del límite de km: %s; '
                                 'el reclamo solo puede registrarse como Rechazada con justificación (RN-22)',
-                                NEW.garantia_id, v_dentro_dias, v_dentro_km));
+                                NEW.garantia_id,
+                                CASE WHEN v_dentro_dias THEN 'sí' ELSE 'no' END,
+                                CASE WHEN v_dentro_km THEN 'sí' ELSE 'no' END));
     END IF;
     RETURN NEW;
 END;
