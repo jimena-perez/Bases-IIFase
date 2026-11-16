@@ -9,3 +9,5 @@ Thumbs.db
 *.dump
 *.backup
 *.log
+# Salidas locales de ejecución (la validación del curso no admite .txt)
+*.txt
