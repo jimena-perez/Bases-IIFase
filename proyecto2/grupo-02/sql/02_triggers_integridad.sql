@@ -1165,7 +1165,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_labor        labor;
-    v_recepcion    timestamptz;
+    v_inicio_labor    timestamptz;
 BEGIN
     IF TG_OP = 'DELETE' THEN
         PERFORM fn_error(format('G02-INM: la participación %s no se elimina', OLD.participacion_id));
@@ -1199,9 +1199,12 @@ BEGIN
             PERFORM fn_error(format('G02-P02: la especialidad %s no está vigente para el técnico %s en %s',
                                     NEW.especialidad_id, NEW.tecnico_id, NEW.inicio::date));
         END IF;
-        SELECT fecha_hora_recepcion INTO v_recepcion FROM orden_trabajo WHERE orden_id = NEW.orden_id;
-        IF NEW.inicio < v_recepcion THEN
-            PERFORM fn_error('G02-P02: la participación no puede iniciar antes de la recepción');
+        -- Coherencia temporal: no se trabaja en una labor antes de iniciarla.
+        SELECT max(fecha_hora) INTO v_inicio_labor FROM historial_labor
+        WHERE labor_id = NEW.labor_id AND estado_nuevo = 'En proceso';
+        IF NEW.inicio < v_inicio_labor THEN
+            PERFORM fn_error(format('G02-P02: la participación (%s) no puede iniciar antes de que la labor %s pasara a En proceso (%s)',
+                                    NEW.inicio, NEW.labor_id, v_inicio_labor));
         END IF;
     END IF;
     RETURN NEW;
@@ -1324,6 +1327,9 @@ BEGIN
         WHEN 'Ajuste negativo' THEN
             v_fisico := v_fisico - NEW.cantidad;
         WHEN 'Consumo' THEN
+            IF NEW.consumo_id IS NULL THEN
+                PERFORM fn_error('G02-INT: un movimiento de Consumo requiere el consumo de origen (consumo_id), D11');
+            END IF;
             SELECT * INTO v_consumo FROM consumo_repuesto WHERE consumo_id = NEW.consumo_id;
             IF v_consumo.cantidad_utilizada IS DISTINCT FROM NEW.cantidad THEN
                 PERFORM fn_error(format('G02-INT: el movimiento de Consumo (%s) no coincide con la cantidad del consumo %s (%s)',
