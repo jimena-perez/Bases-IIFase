@@ -41,11 +41,9 @@ CREATE DOMAIN d_medio_comunicacion AS varchar(20)
     CONSTRAINT ck_d_medio_comunicacion CHECK (VALUE IN (
         'Teléfono', 'Correo', 'Mensaje', 'Presencial', 'Otro'));
 
-CREATE DOMAIN d_texto_obligatorio AS text
-    CONSTRAINT ck_d_texto_obligatorio CHECK (btrim(VALUE) <> '');
-
 COMMENT ON DOMAIN d_estado_orden IS 'Estados de la orden (P1 §diccionario). Secuencia NO lineal: ver transicion_estado_orden.';
 COMMENT ON DOMAIN d_estado_labor IS 'Estados de una labor (P1 §diccionario).';
+COMMENT ON DOMAIN d_medio_comunicacion IS 'Medio por el que se comunica una decisión o una promesa (P1 §diccionario).';
 
 -- =====================================================================
 -- 1. MAESTROS E IDENTIDAD
@@ -788,7 +786,31 @@ CREATE INDEX idx_consumo_labor ON consumo_repuesto (labor_id);
 -- =====================================================================
 -- 7. COMENTARIOS DE DOCUMENTACIÓN (diccionario dentro de la base)
 -- =====================================================================
+COMMENT ON TABLE cliente IS 'Persona u organización que entrega, paga, aprueba o retira (RN-04, SD-02 del P1).';
+COMMENT ON TABLE contacto_cliente IS 'Medios de contacto; al menos uno apto para avisos por cliente, verificado al COMMIT (RN-03).';
+COMMENT ON TABLE vehiculo IS 'Vehículo identificado por su VIN estable; la placa puede cambiar (RN-02).';
+COMMENT ON TABLE propiedad_vehiculo IS 'Propietarios del vehículo con vigencia sin traslapes (D12). No reescribe visitas.';
+COMMENT ON TABLE personal IS 'Personal del taller con rol y estado activo.';
+COMMENT ON TABLE especialidad_tecnico IS 'Especialidades de un técnico con vigencia sin traslapes (RN-14).';
+COMMENT ON TABLE repuesto IS 'Catálogo de repuestos con código interno (RN-17).';
+COMMENT ON TABLE proveedor IS 'Proveedores de repuestos (datos mínimos; sin flujo de compras).';
+COMMENT ON TABLE proveedor_repuesto IS 'Código y precio de referencia de un repuesto en un proveedor (RN-17).';
 COMMENT ON TABLE orden_trabajo IS 'Una visita de un vehículo (RN-01). estado_actual/fecha_prometida_actual solo cambian vía historial (D4).';
+COMMENT ON TABLE objeto_dano IS 'Objetos dejados y daños visibles confirmados por el cliente (RN-06).';
+COMMENT ON TABLE historial_orden IS 'Cambios de estado de la orden con responsable, momento, motivo y secuencia (RN-08). Solo inserción.';
+COMMENT ON TABLE historial_fecha_prometida IS 'Promesa original y reprogramaciones con comunicación, medio, motivo y responsable (RN-07). Solo inserción.';
+COMMENT ON TABLE transicion_estado_orden IS 'Catálogo de transiciones de estado permitidas (no lineal; retrocesos con motivo).';
+COMMENT ON TABLE hallazgo IS 'Hallazgos del diagnóstico con autor técnico y momento (RN-09, D1).';
+COMMENT ON TABLE propuesta IS 'Versiones de la propuesta de una orden; una versión presentada es inmutable (RN-10).';
+COMMENT ON TABLE labor IS 'Trabajo estable de la orden, separado de su precio en cada versión (D6); retrabajos ligados (RN-15).';
+COMMENT ON TABLE repuesto_propuesto IS 'Repuestos estimados por línea de versión (lo estimado, RN-18).';
+COMMENT ON TABLE excepcion_emergencia IS 'Excepción justificada que habilita solo su labor de emergencia (RN-12, D8).';
+COMMENT ON TABLE labor_dependencia IS 'Dependencias N:M entre labores de la misma orden, sin ciclos (RN-15, D7).';
+COMMENT ON TABLE participacion_tecnica IS 'Participación de un técnico en una labor con intervalo y minutos efectivos (RN-13).';
+COMMENT ON TABLE prueba IS 'Pruebas de una labor: qué, quién, cuándo y resultado categórico (RN-16, D10). Solo inserción.';
+COMMENT ON TABLE consumo_repuesto IS 'Repuestos realmente utilizados (≠ estimados, RN-18); siempre con su movimiento de inventario.';
+COMMENT ON TABLE pieza_retirada IS 'Piezas sustituidas y su destino.';
+COMMENT ON TABLE entrega IS 'Entrega del vehículo (máx. 1 por orden) a quien tiene facultad Retirar (RN-20).';
 COMMENT ON COLUMN orden_trabajo.placa_ingreso IS 'Instantánea de la placa al ingresar; no cambia si luego cambia la placa del vehículo (RN-02).';
 COMMENT ON COLUMN orden_trabajo.autorizador_cliente_id IS 'Se conserva por compatibilidad con el alta del Lab03; la facultad real está en facultad_orden (D2).';
 COMMENT ON TABLE facultad_orden IS 'Facultades por visita (Aprobar/Retirar) con fuente, verificación y vigencia (D2).';
