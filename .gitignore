@@ -1,0 +1,11 @@
+# Archivos locales que no forman parte de la entrega
+.env
+*.env
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*.dump
+*.backup
+*.log
