@@ -20,6 +20,8 @@
 --     confirmar.
 --   * 9007 (Laura) para entrega y garantía.
 --   * 9011 / 9012 / 9013 reservadas para las pruebas de concurrencia.
+--   * 9014 (Jorge) para decisiones incompletas (P01-L).
+--   * El vehículo KLM789 queda sin visita para demostrar el alta del Lab03.
 --   * Técnicos con especialidades distintas, un técnico inactivo y personal
 --     que existe pero no es técnico.
 -- IDs fijos y conocidos; luego se ajustan las secuencias IDENTITY.
@@ -70,7 +72,8 @@ INSERT INTO vehiculo (vin, placa, marca, modelo, anio, tipo_combustible) VALUES
  ('1N4AL3AP8JC000001', 'YZA567', 'Nissan',     'Altima',  2018, 'Gasolina'),
  ('3FADP4BJ7FM000001', 'BCD890', 'Ford',       'Fiesta',  2015, 'Gasolina'),
  ('JTDKB20U793000001', 'EFG123', 'Toyota',     'Prius',   2009, 'Híbrido'),
- ('1G1ZD5ST0JF000001', 'HIJ456', 'Chevrolet',  'Malibu',  2018, 'Gasolina');
+ ('1G1ZD5ST0JF000001', 'HIJ456', 'Chevrolet',  'Malibu',  2018, 'Gasolina'),
+ ('2HGFC2F59KH000001', 'KLM789', 'Honda',      'Civic',   2019, 'Gasolina');
 
 INSERT INTO propiedad_vehiculo (propiedad_id, vin, cliente_id, desde, hasta) VALUES
  (1,  '1HGCM82633A123456', 101, '2018-03-01', NULL),
@@ -84,7 +87,8 @@ INSERT INTO propiedad_vehiculo (propiedad_id, vin, cliente_id, desde, hasta) VAL
  (9,  '1N4AL3AP8JC000001', 101, '2018-11-01', NULL),
  (10, '3FADP4BJ7FM000001', 102, '2015-07-01', NULL),
  (11, 'JTDKB20U793000001', 104, '2012-01-01', NULL),
- (12, '1G1ZD5ST0JF000001', 106, '2019-01-01', NULL);
+ (12, '1G1ZD5ST0JF000001', 106, '2019-01-01', NULL),
+ (13, '2HGFC2F59KH000001', 108, '2019-06-01', NULL);
 
 -- ---------------------------------------------------------------------
 -- 3. Personal (3 del Lab03 + 4 nuevos) y especialidades con vigencia
@@ -172,7 +176,9 @@ INSERT INTO orden_trabajo (orden_id, vin, cliente_factura_id, entregado_por_clie
  (9012, '3FADP4BJ7FM000001', 102, 102, 102, 201, '2026-11-08 08:30', 120000, '1/4',
         'Cambio de discos (concurrencia P02)', NULL, NULL),
  (9013, 'JTDKB20U793000001', 104, 104, 104, 201, '2026-11-08 09:00', 210000, '3/4',
-        'Revisión híbrida (concurrencia P03)', NULL, '2026-11-12 17:00');
+        'Revisión híbrida (concurrencia P03)', NULL, '2026-11-12 17:00'),
+ (9014, '1G1ZD5ST0JF000001', 106, 106, 106, 206, '2026-11-08 10:00', 54000, '1/2',
+        'Servicio de mantenimiento mayor', NULL, '2026-11-11 16:00');
 
 INSERT INTO historial_orden (orden_id, estado, fecha_hora, personal_id) VALUES
  (9001, 'Recibida', '2026-11-02 08:15', 201),
@@ -184,7 +190,8 @@ INSERT INTO historial_orden (orden_id, estado, fecha_hora, personal_id) VALUES
  (9007, 'Recibida', '2026-11-07 08:00', 201),
  (9011, 'Recibida', '2026-11-08 08:00', 201),
  (9012, 'Recibida', '2026-11-08 08:30', 201),
- (9013, 'Recibida', '2026-11-08 09:00', 201);
+ (9013, 'Recibida', '2026-11-08 09:00', 201),
+ (9014, 'Recibida', '2026-11-08 10:00', 206);
 
 -- Facultades adicionales verificadas en la recepción (D2):
 --   Jorge Quesada (106) también puede RETIRAR el vehículo de Mensajería (9004).
@@ -232,7 +239,13 @@ INSERT INTO hallazgo (hallazgo_id, orden_id, diagnosticado_por_id, fecha_hora, s
  (4113, 9012, 202, '2026-11-08 09:00', 'Discos con surcos profundos', 'Desgaste', 'Alta',
         'Cambiar disco delantero'),
  (4114, 9013, 203, '2026-11-08 09:30', 'Ventilador de batería híbrida ruidoso', 'Suciedad', 'Media',
-        'Limpiar ventilador');
+        'Limpiar ventilador'),
+ (4115, 9014, 204, '2026-11-08 11:00', 'Aceite degradado', 'Kilometraje de servicio', 'Media',
+        'Cambiar aceite y filtro'),
+ (4116, 9014, 204, '2026-11-08 11:15', 'Filtro de aire saturado', 'Intervalo de mantenimiento', 'Baja',
+        'Cambiar filtro de aire'),
+ (4117, 9014, 202, '2026-11-08 11:30', 'Escobillas cristalizadas', 'Exposición al sol', 'Baja',
+        'Cambiar escobillas');
 
 -- Reserva de repuesto para la orden 9003 (preparación: el taller apartó un
 -- juego de pastillas al diagnosticar). El consumo en P02 la liberará.
